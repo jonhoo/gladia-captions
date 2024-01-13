@@ -15,7 +15,7 @@ import os
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
-import googleapiclient.errors
+from googleapiclient.errors import HttpError
 
 from googleapiclient.http import MediaFileUpload
 
@@ -32,47 +32,49 @@ def main():
     credentials = flow.run_local_server(port=0)
     youtube = googleapiclient.discovery.build(api_service_name, api_version, credentials=credentials)
 
-    for file in os.listdir('.'):
-        if not os.path.isfile(file) or os.path.splitext(file)[1] != ".srt":
-            continue
-
-        video_id = file[len("YYYY-MM-DD-"):][:11]
-        print("==>", video_id)
-
-        request = youtube.captions().list(
-            part="id,snippet",
-            videoId=video_id
-        )
-        response = request.execute()
-        has_gladia = False
-        nstandard = 0
-        for caption in response['items']:
-            if caption['snippet']['trackKind'] != "standard":
+    try:
+        for file in os.listdir('.'):
+            if not os.path.isfile(file) or os.path.splitext(file)[1] != ".srt":
                 continue
-            if caption['snippet']['name'] == "AI (Gladia)":
-                has_gladia = True
-                continue
-            nstandard += 1
-        if has_gladia:
-            print(" -> Skipping as already-AI-captioned.")
-            continue
-        if nstandard != 1:
-            print(" -> Has caption beyond ASR/title+description already")
-            continue
 
-        request = youtube.captions().insert(
-            part="snippet",
-            body=dict(
-              snippet=dict(
-                videoId=video_id,
-                language="en",
-                name="AI (Gladia)",
-                isDraft=False
-              )
-            ),
-            media_body=MediaFileUpload(file)
-        )
-        response = request.execute()
+            video_id = file[len("YYYY-MM-DD-"):][:11]
+            print("==>", video_id)
+
+            request = youtube.captions().list(
+                part="id,snippet",
+                videoId=video_id
+            )
+            response = request.execute()
+            has_gladia = False
+            nstandard = 0
+            for caption in response['items']:
+                if caption['snippet']['trackKind'] != "standard":
+                    continue
+                if caption['snippet']['name'] == "AI (Gladia)":
+                    has_gladia = True
+                    continue
+                nstandard += 1
+            if has_gladia:
+                print(" -> Skipping as already-AI-captioned.")
+                continue
+            if nstandard != 1:
+                print(" -> Has caption beyond ASR/title+description already?")
+
+            request = youtube.captions().insert(
+                part="snippet",
+                body=dict(
+                  snippet=dict(
+                    videoId=video_id,
+                    language="en",
+                    name="AI (Gladia)",
+                    isDraft=False
+                  )
+                ),
+                media_body=MediaFileUpload(file)
+            )
+            response = request.execute()
+    except HttpError as error:
+        print(f'An HTTP error {error.resp.status} occurred: {error.content}')
 
 if __name__ == "__main__":
     main()
