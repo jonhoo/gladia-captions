@@ -19,7 +19,7 @@ use tokio::io::AsyncWriteExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use walkdir::WalkDir;
 
-const MAX_SEGMENT_LENGTH: f64 = 2800.0;
+const MAX_SEGMENT_LENGTH: f64 = 3300.0;
 const CONCURRENT_TRANSCRIBES: usize = 4;
 const MAX_PRICE: f64 = 30.0;
 const PRICE_PER_SECOND: f64 = 0.000193;
@@ -571,9 +571,12 @@ async fn main() -> anyhow::Result<()> {
                 let mut ffmpeg = tokio::process::Command::new("ffmpeg");
 
                 // NOTE: we don't use -acodec copy because that would be limited to extracting time
-                // segments at block boundaries for the audio codec (e.g., blocks in AAC). instead,
-                // we reencode to flac, which is lossless, which allows extracting exact times
-                // since the input is muxed.
+                // segments at block boundaries for the audio codec (e.g., blocks in AAC).
+                // instead, we need to reencode, which allows extracting exact times since the
+                // input is muxed. it's tempting to reencode to flac, which is lossless, but then
+                // we quickly run into the 500MB file size limit. opus would be lovely, but isn't
+                // supported (<https://gladia-stt.nolt.io/35>). so, we go with vorbis/ogg. we avoid
+                // aac because some aac encoders are bad.
                 let start_f64 = start.as_secs_f64();
                 let ss = start_f64.to_string();
                 ffmpeg
@@ -583,9 +586,11 @@ async fn main() -> anyhow::Result<()> {
                     .arg(&video.local.path)
                     .arg("-vn")
                     .arg("-acodec")
-                    .arg("flac")
+                    .arg("libvorbis")
                     .arg("-f")
-                    .arg("flac")
+                    .arg("ogg")
+                    .arg("-qscale:a")
+                    .arg("8")
                     .arg("-nostdin")
                     .arg("-hide_banner")
                     .arg("-loglevel")
@@ -633,7 +638,7 @@ async fn main() -> anyhow::Result<()> {
                                     ffmpeg.stdout.take().expect("set to piped"),
                                     BytesCodec::new(),
                                 )))
-                                .mime_str("audio/flac")
+                                .mime_str("application/ogg")
                                 .context("valid mime string")?,
                             )
                             .text("toggle_diarization", "false"),
