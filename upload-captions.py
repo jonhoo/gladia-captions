@@ -37,15 +37,36 @@ def main():
             continue
 
         video_id = file[len("YYYY-MM-DD-"):][:11]
-        print(video_id)
+        print("==>", video_id)
+
+        request = youtube.captions().list(
+            part="id,snippet",
+            videoId=video_id
+        )
+        response = request.execute()
+        has_gladia = False
+        nstandard = 0
+        for caption in response['items']:
+            if caption['snippet']['trackKind'] != "standard":
+                continue
+            if caption['snippet']['name'] == "AI (Gladia)":
+                has_gladia = True
+                continue
+            nstandard += 1
+        if has_gladia:
+            print(" -> Skipping as already-AI-captioned.")
+            continue
+        if nstandard != 1:
+            print(" -> Has caption beyond ASR/title+description already")
+            continue
 
         request = youtube.captions().insert(
             part="snippet",
             body=dict(
               snippet=dict(
                 videoId=video_id,
-                language="en-US",
-                name="English",
+                language="en",
+                name="AI (Gladia)",
                 isDraft=False
               )
             ),
