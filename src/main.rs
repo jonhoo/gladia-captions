@@ -382,13 +382,9 @@ async fn main() -> anyhow::Result<()> {
                     }
                 });
         let url = format!(
-                "https://www.googleapis.com/youtube/v3/videos?part=snippet,recordingDetails,contentDetails&fields=nextPageToken,items(id,snippet(title),recordingDetails(recordingDate),contentDetails(duration))&id={}&maxResults=50&key={}{}",
+                "https://www.googleapis.com/youtube/v3/videos?part=snippet,recordingDetails,contentDetails&fields=items(id,snippet(title),recordingDetails(recordingDate),contentDetails(duration))&id={}&maxResults=50&key={}",
                 ids,
                 config.google_api_key,
-                next_page_token
-                    .as_ref()
-                    .map(|pt| format!("&pageToken={pt}"))
-                    .unwrap_or_default()
             );
         let res = with_cache(&url, || async {
             let res = client
@@ -408,11 +404,6 @@ async fn main() -> anyhow::Result<()> {
         println!(" -> found page of {} videos", res.items.len());
         for video in res.items {
             youtube_videos.push(video);
-        }
-
-        next_page_token = res.next_page_token;
-        if next_page_token.is_none() {
-            break;
         }
     }
     youtube_videos.sort_by(|a, b| {
