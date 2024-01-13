@@ -244,7 +244,7 @@ async fn main() -> anyhow::Result<()> {
     let mut local_videos = BTreeSet::new();
     for entry in WalkDir::new(
         std::env::args()
-            .next()
+            .nth(1)
             .expect("no path to video files given"),
     )
     .same_file_system(true)
