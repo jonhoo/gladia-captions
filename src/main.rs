@@ -19,7 +19,7 @@ use tokio::io::AsyncWriteExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use walkdir::WalkDir;
 
-const MAX_SEGMENT_LENGTH: f64 = 3300.0;
+const MAX_SEGMENT_LENGTH: f64 = 3000.0;
 const CONCURRENT_TRANSCRIBES: usize = 3;
 const MAX_PRICE: f64 = 30.0;
 const PRICE_PER_SECOND: f64 = 0.000193;
