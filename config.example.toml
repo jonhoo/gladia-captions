@@ -1,0 +1,28 @@
+# to run this, you need two things: one for accessing YouTube, and the other to
+# access Gladia.
+#
+# first, create a Google project here:
+#
+#   https://console.cloud.google.com/projectcreate
+#
+# hover over "APIs & Services" on the left, and click "Credentials".
+# click "+ CREATE CREDENTIALS" near the top. choose "API key".
+# past the API key here:
+google_api_key = ""
+# now we need to give it access to the YouTube API:
+# click "Enabled APIs & services" on the left.
+# click "+ ENABLE APIS AND SERVICES" near the top. search for YouTube.
+# open "YouTube Data API v3" and click "Enable".
+# 
+# go back to "Credentials" (using the menu on the left).
+# click the name of the API key you created earlier.
+# under "API restrictions", select "Restrict key".
+# in the dropbox, choose "YouTube Data API v3". click ok. then save.
+#
+# now let's do Gladia. this one is easier.
+# go to your Gladia dashboard. click "Account" on the left.
+# write something in the text box and click "Generate Key".
+# if the new key doesn't immediately appear in the list of keys, refresh.
+# the copy the API Key for the new key from the list and paste it here:
+gladia_api_key = ""
+# finally, copy this file to config.toml

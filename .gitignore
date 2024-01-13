@@ -1,0 +1,4 @@
+/target/
+*.srt
+*.json
+config.toml
