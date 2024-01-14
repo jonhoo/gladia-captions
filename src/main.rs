@@ -774,7 +774,8 @@ async fn main() -> anyhow::Result<()> {
         });
     }
 
-    while let Some(v) = tasks.join_next().await {
+    while !tasks.is_empty() {
+        let v = tasks.join_next().await.expect("!is_empty");
         let _ = v.context("join failed")?.context("job failed")?;
     }
     eprintln!("==> all transcription completed");
