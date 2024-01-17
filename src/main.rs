@@ -574,9 +574,9 @@ async fn main() -> anyhow::Result<()> {
                 // segments at block boundaries for the audio codec (e.g., blocks in AAC).
                 // instead, we need to reencode, which allows extracting exact times since the
                 // input is muxed. it's tempting to reencode to flac, which is lossless, but then
-                // we quickly run into the 500MB file size limit. opus would be lovely, but isn't
-                // supported (<https://gladia-stt.nolt.io/35>). so, we go with vorbis/ogg. we avoid
-                // aac because some aac encoders are bad.
+                // we quickly run into the 500MB file size limit. so, we go with opus, which is
+                // modern, compact, and high-quality. we avoid aac because some aac encoders are
+                // bad.
                 let start_f64 = start.as_secs_f64();
                 let ss = start_f64.to_string();
                 ffmpeg
@@ -585,12 +585,12 @@ async fn main() -> anyhow::Result<()> {
                     .arg("-i")
                     .arg(&video.local.path)
                     .arg("-vn")
-                    .arg("-acodec")
-                    .arg("libvorbis")
+                    .arg("-c:a")
+                    .arg("libopus")
                     .arg("-f")
                     .arg("ogg")
-                    .arg("-qscale:a")
-                    .arg("8")
+                    .arg("-b:a")
+                    .arg("192k")
                     .arg("-nostdin")
                     .arg("-hide_banner")
                     .arg("-loglevel")
@@ -638,7 +638,7 @@ async fn main() -> anyhow::Result<()> {
                                     ffmpeg.stdout.take().expect("set to piped"),
                                     BytesCodec::new(),
                                 )))
-                                .mime_str("application/ogg")
+                                .mime_str("audio/opous")
                                 .context("valid mime string")?,
                             )
                             .text("toggle_diarization", "false"),
