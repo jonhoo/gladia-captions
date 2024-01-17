@@ -2,3 +2,4 @@
 *.srt
 *.json
 config.toml
+*.skip

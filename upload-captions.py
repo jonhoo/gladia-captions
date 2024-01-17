@@ -12,6 +12,7 @@
 # in config.example.toml first.
 
 import os
+from pathlib import Path
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -40,6 +41,11 @@ def main():
             video_id = file[len("YYYY-MM-DD-"):][:11]
             print("==>", video_id)
 
+            skip = Path("%s.skip" % video_id)
+            if skip.exists():
+                print(" -> Skipping as skip file exists.")
+                continue
+
             request = youtube.captions().list(
                 part="id,snippet",
                 videoId=video_id
@@ -56,6 +62,7 @@ def main():
                 nstandard += 1
             if has_gladia:
                 print(" -> Skipping as already-AI-captioned.")
+                skip.touch()
                 continue
             if nstandard != 1:
                 print(" -> Has caption beyond ASR/title+description already?")
@@ -73,6 +80,7 @@ def main():
                 media_body=MediaFileUpload(file)
             )
             response = request.execute()
+            skip.touch()
     except HttpError as error:
         print(f'An HTTP error {error.resp.status} occurred: {error.content}')
 
